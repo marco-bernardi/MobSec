@@ -1,0 +1,58 @@
+# LaTeX intermediate files
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fls
+*.idx
+*.log
+*.nav
+*.out
+*.snm
+*.toc
+*.vrb
+
+# LaTeX editor files
+*.bak
+*.sav
+*.swp
+*.tmp
+
+# LaTeX compiler files
+*.pdfsync
+*.synctex.gz
+*.dvi
+*.ps
+
+# Image and graphic files (if not part of the repository)
+#*.png
+#*.jpg
+#*.jpeg
+#*.eps
+
+# External dependency directories
+blib/
+localtexmf/
+texmf/
+
+# DS_Store files on Mac
+.DS_Store
+
+# Config files
+(texmf.cnf
+texworksrc)
+
+# IDE specific files
+.idea/
+.vscode/
+
+# LaTeX project specific
+*-blx.bib
+*-thm
+*.listing
+*.run.xml
+comment.cut
+
+# LaTeX build files
+*.fdb_latexmk
+*.pdf

@@ -1,0 +1,450 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage{listings}
+
+\title{Android Security Architecture and Sandboxing}
+\author{Mobile Security Course}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction to Android Security Model}
+Android, being an extension of the Linux operating system, implements several unique security features that differentiate it from traditional Linux systems. While it inherits many core Linux functionalities, Android introduces specific security mechanisms tailored for mobile devices and application management.
+
+\section{User Identifier Management}
+\subsection{Android's Unique Approach}
+Unlike traditional Linux systems where user identifiers are associated with physical users, Android implements a different paradigm. Since Android is designed for personal devices, it assigns unique user identifiers to applications rather than physical users. This fundamental difference reflects Android's application-centric security model.
+
+\subsection{User ID Assignment System}
+The Android operating system implements a structured approach to user identifier assignment:
+\begin{itemize}
+    \item System applications are assigned UIDs starting from 1,000
+    \item Third-party and user-installed applications receive UIDs above 10,000
+\end{itemize}
+This systematic assignment allows for easy identification of application types based solely on their UID.
+
+\section{Application Sandboxing}
+\subsection{Installation Process and Directory Structure}
+During application installation, Android performs several crucial security-related tasks:
+\begin{itemize}
+    \item Assigns a unique user identifier to the new application
+    \item Creates a private directory (internal storage) accessible only to that application
+\end{itemize}
+
+System applications are installed in the /system partition, while user-installed applications reside in the /data partition, providing additional separation at the filesystem level.
+
+\subsection{Runtime Security}
+At runtime, Android enforces strict process isolation:
+\begin{itemize}
+    \item Each application runs in its own dedicated process
+    \item Applications are confined to their respective sandboxes
+    \item Inter-process communication is strictly controlled
+\end{itemize}
+
+\section{Shared User ID Feature}
+\subsection{Implementation and Requirements}
+The Shared User ID is a specialized feature allowing multiple applications to share the same user identifier, subject to strict requirements:
+\begin{itemize}
+    \item Applications must share the same digital signature
+    \item Must be explicitly requested during development
+\end{itemize}
+
+\subsection{Security Implications}
+When applications share a user ID, they effectively share:
+\begin{itemize}
+    \item All declared permissions
+    \item Access to each other's private resources
+\end{itemize}
+
+This feature, while powerful, requires careful consideration due to its security implications. It is primarily used by applications from the same developer or development team, ensuring a level of trust and coordination in permission usage.
+\section{Android Security Boundaries}
+Android implements two distinct security boundaries that work together to create a comprehensive security model:
+
+\subsection{Vertical Security Boundary}
+The vertical security boundary implements application isolation through the Android sandbox model. This boundary:
+\begin{itemize}
+    \item Separates each application from others installed on the device
+    \item Enforces process-level isolation
+    \item Controls inter-application communication
+\end{itemize}
+
+\subsection{Horizontal Security Boundary}
+The horizontal security boundary separates the user space from the kernel space:
+\begin{itemize}
+    \item User space contains applications and libraries
+    \item Kernel space handles critical system operations
+    \item Applications must cross this boundary to perform system operations
+\end{itemize}
+
+\section{The Binder Mechanism}
+\subsection{Role in Android Architecture}
+The Binder, implemented as a kernel driver, serves as the crucial component that enables:
+\begin{itemize}
+    \item Communication between user space and kernel space
+    \item Inter-process communication between applications
+\end{itemize}
+
+\section{Application Execution Model}
+\subsection{Application Development and Runtime}
+Android applications, regardless of their programming language (Java, Kotlin, C, or C++), operate within specific constraints:
+\begin{itemize}
+    \item Execute in user space
+    \item Rely on Android Framework APIs
+    \item Cannot directly access hardware resources
+\end{itemize}
+
+\subsection{Interaction with System Resources}
+Even basic operations, such as writing a file to storage, require interaction with the kernel space:
+\begin{itemize}
+    \item Applications use high-level APIs provided by the Android Framework
+    \item Direct hardware access is prohibited for security reasons
+    \item All system operations are mediated through the kernel
+\end{itemize}
+
+\section{Framework API Architecture}
+\subsection{API Abstraction Layers}
+The Android Framework provides developers with high-level APIs that abstract the complexity of system operations:
+\begin{itemize}
+    \item Framework APIs handle the communication with the kernel
+    \item Developers work with high-level abstractions
+    \item System ensures security enforcement at lower levels
+\end{itemize}
+
+For example, when an application needs to write a file, it uses the Framework's OutputStreamWriter API rather than directly accessing storage. This abstraction ensures proper security measures are maintained while providing convenient development interfaces.
+
+\section{System Call Translation}
+\subsection{High-Level to Low-Level Translation}
+When developers write Android applications using high-level languages (Java, Kotlin, C++), the code undergoes a translation process:
+
+The high-level API calls are converted into system calls that the kernel can understand and execute. For example, when using an OutputStreamWriter to save a file, it translates into a sequence of system calls:
+\begin{itemize}
+    \item open() - Opens the file
+    \item write() - Writes data to the file
+    \item close() - Closes the file handle
+\end{itemize}
+
+\subsection{Architecture-Specific Conventions}
+System calls implementation varies based on the target architecture:
+
+\subsubsection{x86 Architecture}
+In 32-bit x86 systems:
+\begin{itemize}
+    \item System call number stored in EAX register
+    \item Arguments stored in specific registers
+    \item Return value placed in a designated register
+\end{itemize}
+
+In 64-bit x86 systems:
+\begin{itemize}
+    \item Different register naming conventions
+    \item Modified system call conventions
+    \item Altered argument passing mechanism
+\end{itemize}
+
+\subsubsection{ARM Architecture}
+ARM architectures implement their own specific conventions for:
+\begin{itemize}
+    \item Register naming
+    \item System call numbering
+    \item Argument passing
+    \item Return value handling
+\end{itemize}
+
+\section{The Binder in Detail}
+\subsection{Core Functionality}
+The Binder serves as a critical kernel driver with multiple responsibilities:
+\begin{itemize}
+    \item Facilitates communication between user space and kernel space
+    \item Enables inter-process communication
+    \item Translates high-level API calls to system calls
+\end{itemize}
+
+\subsection{System Services Interaction}
+The Binder plays a crucial role in accessing system services:
+\begin{itemize}
+    \item System services run in privileged processes
+    \item Applications run in unprivileged sandboxes
+    \item The Binder mediates all interactions between them
+\end{itemize}
+
+\section{System Services Architecture}
+\subsection{Privileged Services}
+System services implement critical functionalities:
+\begin{itemize}
+    \item Location services
+    \item Activity management
+    \item Package information
+    \item Sensitive data access
+\end{itemize}
+
+\subsection{Security Implementation}
+The system services architecture implements several security measures:
+\begin{itemize}
+    \item Services run in privileged processes
+    \item Access control through the Binder
+    \item Separation from user-space applications
+\end{itemize}
+
+\section{Security Considerations}
+\subsection{Critical Nature of the Binder}
+The Binder represents a critical security boundary:
+\begin{itemize}
+    \item Bridges unprivileged and privileged spaces
+    \item Requires robust security guarantees
+    \item Historical vulnerabilities have been discovered and patched
+\end{itemize}
+
+\subsection{Security Research}
+Research has shown:
+\begin{itemize}
+    \item The Binder has been subject to security analysis
+    \item Vulnerabilities have been identified and fixed
+    \item Continuous security improvements are made
+\end{itemize}
+
+The Binder remains a critical security component, requiring ongoing attention and updates to maintain the security of the Android platform.
+\section{Inter-Process Communication in Android}
+\subsection{AIDL Framework}
+The Android Interface Definition Language (AIDL) facilitates client-server communication in Android:
+\begin{itemize}
+    \item Client: User space application running in non-privileged process
+    \item Server: System services running in privileged process
+    \item Automatically generates proxy and stub components
+\end{itemize}
+
+\subsection{Proxy-Stub Architecture}
+The communication model implements a proxy-stub pattern:
+\begin{itemize}
+    \item Proxy component resides in the client process
+    \item Stub component exists in the server process
+    \item Binder mediates communication between them
+\end{itemize}
+
+\textbf{Proxy:} The proxy is a client-side component that acts as an intermediary between the client application and the server. It simulates the behavior of the server, allowing the client to invoke methods as if they were local. The key responsibilities of the proxy include:
+\begin{itemize}
+    \item \textbf{Request Handling:} It intercepts the client's method calls, encapsulating them as remote procedure calls.
+    \item \textbf{Serialization:} The proxy converts (serializes) the method arguments into a format suitable for transmission over the network.
+    \item \textbf{Communication:} It sends the serialized request to the server via the binder.
+    \item \textbf{Response Handling:} Once the proxy receives the server's response, it deserializes the data and returns it to the client application.
+\end{itemize}
+
+\textbf{Stub:} The stub is a server-side component that represents the server's interface. Its main role is to handle incoming requests from the proxy and provide the necessary responses. The stub's responsibilities include:
+\begin{itemize}
+    \item \textbf{Request Reception:} It listens for incoming requests from the binder and accepts serialized method calls sent by the proxy.
+    \item \textbf{Deserialization:} The stub converts (deserializes) the received data back into a format that the server can process.
+    \item \textbf{Method Invocation:} It calls the appropriate method on the server using the deserialized arguments.
+    \item \textbf{Response Preparation:} After processing the request, the stub serializes the result and sends it back to the proxy via the binder.
+\end{itemize}
+
+In summary, the proxy and stub work together in a proxy-stub architecture to facilitate remote communication between clients and servers. The proxy handles client-side interactions, while the stub manages server-side processing, both relying on the binder to mediate the communication between them.
+
+
+\section{Intent-Based Communication}
+\subsection{Intent Communication Flow}
+When an application needs to communicate with another application through intents, the process involves multiple steps:
+
+\subsubsection{Initial Request}
+Application A initiates the process by:
+\begin{itemize}
+    \item Creating an explicit intent targeting Component X in Application B
+    \item Calling startActivity() with the intent as parameter
+\end{itemize}
+
+\subsubsection{Binder Intervention}
+The Binder driver:
+\begin{itemize}
+    \item Intercepts the API call
+    \item Identifies the need for ActivityManager involvement
+    \item Routes the request to the ActivityManager service
+\end{itemize}
+
+\subsubsection{ActivityManager Processing}
+The ActivityManager service:
+\begin{itemize}
+    \item Runs in a privileged process
+    \item Validates the intent request
+    \item Determines target component details
+    \item Coordinates the component launch
+\end{itemize}
+
+\section{System Services Role}
+\subsection{ActivityManager Service}
+The ActivityManager plays a central role in Android:
+\begin{itemize}
+    \item Manages all activity-related operations
+    \item Controls component lifecycle
+    \item Mediates inter-application communication
+    \item Runs in privileged process space
+\end{itemize}
+
+\subsection{Critical Nature of System Services}
+System services are fundamental to Android operation:
+\begin{itemize}
+    \item Required even for basic application functionality
+    \item Manage sensitive operations and data
+    \item Provide security boundaries between applications
+    \item Enable controlled inter-process communication
+\end{itemize}
+
+\section{Complex Communication Patterns}
+\subsection{Multi-Component Interaction}
+Even simple operations involve multiple system components:
+\begin{itemize}
+    \item Application level code
+    \item System services
+    \item Binder driver
+    \item Kernel-level operations
+\end{itemize}
+
+\subsection{Security Implications}
+The complex interaction pattern has important security considerations:
+\begin{itemize}
+    \item Multiple privilege level transitions
+    \item Various security boundaries crossed
+    \item Need for careful validation at each step
+    \item Potential for security vulnerabilities at transition points
+\end{itemize}
+
+This architecture ensures that even when applications need to communicate with each other, they do so through controlled, mediated channels that maintain system security while enabling necessary functionality.
+
+\section{Permission Model}
+
+Android's permission model is a critical component of its security architecture. It enables applications to request access to sensitive data and resources while ensuring that users are aware of the permissions being granted.
+
+\subsection{Why Permissions?}
+
+Permissions are necessary to protect sensitive data and resources on the device. Without a permission model, applications would have unrestricted access to all data and resources, which would compromise the security and privacy of the user.
+
+\subsection{Types of Permissions}
+
+There are several types of permissions in Android:
+
+\begin{itemize}
+\item \textbf{Normal Permissions}: These permissions are automatically granted to an application when it is installed. They are considered low-risk and do not require user interaction. An example of a normal permission is the INTERNET permission.
+\item \textbf{Dangerous Permissions}: These permissions are considered high-risk and require user interaction to grant. Examples of dangerous permissions include LOCATION, SMS, and CONTACTS.
+\item \textbf{Signature Permissions}: These permissions are granted to applications that have the same signature as the application that declared the permission. This allows two or more applications to share a custom permission.
+\item \textbf{Signature or System Permissions}: These permissions are granted to system applications or applications that have the same signature as the application that declared the permission.
+\end{itemize}
+
+\subsection{Permission Model Changes}
+
+The permission model in Android has undergone significant changes since its introduction. Prior to Android 6.0, permissions were granted at installation time, and users were not prompted to grant permissions at runtime. However, with the introduction of Android 6.0, the permission model was changed to request permissions at runtime.
+
+\subsection{Requesting Permissions at Runtime}
+
+When an application requests a dangerous permission at runtime, the user is prompted to grant the permission. The application can continue to request the permission until the user grants it or denies it. If the user denies a permission, the application can still function, but it will not have access to the requested resource.
+
+\subsection{Best Practices for Using Permissions}
+
+There are several best practices for using permissions in Android:
+
+\begin{itemize}
+\item \textbf{Only request the permissions you need}: Requesting unnecessary permissions can compromise the security and privacy of the user.
+\item \textbf{Use the least restrictive permission possible}: Using a more restrictive permission than necessary can limit the functionality of your application.
+\item \textbf{Be transparent about the permissions you request}: Users should be aware of the permissions being requested and why they are necessary for the application to function.
+\end{itemize}
+
+By following these best practices and understanding the Android permission model, developers can create applications that are secure, private, and respect the user's permissions.
+\section{Runtime Permission Model}
+\subsection{Requesting Permissions at Runtime}
+
+The Android operating system, starting from Marshmallow (6.0), has introduced a new security model, known as the Runtime Permission Model. With this model, applications can request permissions at runtime, rather than during installation.
+
+When an application requests a permission at runtime, the user is prompted with a dialog box, which includes the permission request and an explanation of why the application needs that permission. The user can choose to grant or deny the permission, and can also select the option to "Never ask again".
+
+\subsection{User Consent}
+
+User consent is a critical component of the Runtime Permission Model. Every time an application requests a permission, the user is presented with a dialog box, which requires them to explicitly grant or deny the permission.
+
+The dialog box provides the user with additional information about the permission, including why the application needs it and what functionality will be enabled if the permission is granted.
+
+\subsection{Permission Groups}
+In Android, permissions are grouped into categories, known as permission groups. These groups help users to better understand the permissions being requested and make more informed decisions about granting or denying permissions.
+
+Each permission group includes a list of related permissions, which are necessary for a specific functionality. For example, the "Location" permission group includes the "ACCESS\_FINE\_LOCATION" and "ACCESS\_COARSE\_LOCATION" permissions.
+
+\subsection{Revoking Permissions}
+
+The Runtime Permission Model also allows users to revoke permissions that were previously granted. This provides an additional layer of security and control over the applications installed on a device.
+
+Users can revoke permissions through the device's settings menu, where they can view a list of applications and the permissions they have granted.
+\subsection{Advantages and Disadvantages}
+
+The Runtime Permission Model has both advantages and disadvantages.
+
+Advantages include:
+
+\begin{itemize}
+\item More fine-grained control over permissions
+\item Improved user experience, as users are not required to grant all permissions at once
+\item Enhanced security, as users can revoke permissions at any time
+\end{itemize}
+
+Disadvantages include:
+
+\begin{itemize}
+\item Increased complexity for application developers
+\item Potential for user confusion, as users may be asked to grant multiple permissions at different times
+\end{itemize}
+
+\section{Declaring Components}
+\subsection{Exported Attribute}
+
+In Android, components can be declared with the "exported" attribute, which controls whether other applications can invoke them.
+
+By default, the "exported" attribute is set to false, which means that the component cannot be invoked by other applications. Developers can set the "exported" attribute to true, which allows other applications to invoke the component.
+
+However, there is an important exception to this rule: if a component has an intent filter defined, the "exported" attribute is automatically set to true, regardless of whether it's explicitly declared as such. This means that any component with an intent filter can be invoked by other applications, unless the developer explicitly sets "exported" to false.
+
+\subsection{Intent Filters}
+
+Intent filters are used to declare the capabilities of a component and what types of intent it can handle.
+
+Components can have multiple intent filters, which allow them to handle different types of intent.
+
+\section{Custom Permissions}
+\subsection{Declaring Custom Permissions}
+
+Custom permissions are used to restrict access to a component to specific applications.
+
+Developers can declare custom permissions in their application's manifest file, specifying the name, permission group, and protection level.
+
+\subsection{Protection Levels}
+
+Custom permissions have two protection levels: signature and dangerous.
+
+\begin{itemize}
+\item Signature: This protection level allows the custom permission to be declared by applications with the same signature as the declaring application.
+\item Dangerous: This protection level allows any application to declare the custom permission, but the user will be prompted to grant the permission when the application is run.
+\end{itemize}
+
+Here is the revised text with the code embedded:
+
+\subsection{Example}
+
+Here is an example of a broadcast receiver that is protected by a custom permission:
+
+The broadcast receiver is declared in the manifest file with an intent filter, as shown below:
+
+\begin{lstlisting}[language=xml]
+<receiver
+   android:name="com.example.myapp.DeadlyReceiver"
+   android:permission="com.example.myapp.permission.DEADLY_STUFF">
+   <intent-filter>
+     <action android:name="com.example.myapp.action.SHOOT"/>
+   </intent-filter>
+ </receiver>
+\end{lstlisting}
+
+In this example:
+
+\begin{itemize}
+\item The broadcast receiver is declared in the manifest file with an intent filter.
+\item The intent filter specifies the action that must be included in the intent to invoke the broadcast receiver.
+\item The broadcast receiver is protected by a custom permission, which is declared in the manifest file.
+\item Only applications that declare the custom permission can invoke the broadcast receiver.
+\end{itemize}
+\end{document}
