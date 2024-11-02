@@ -1,0 +1,229 @@
+\documentclass{article}
+\usepackage{graphicx}
+
+\title{Mobile Security: Android Components Overview}
+\author{Lecture Notes}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Introduction to Android Components}
+Android applications differ from traditional desktop applications in their entry point structure. While desktop applications typically have a single entry point through an icon, Android applications can have multiple entry points through their exported components. This design choice is motivated by the need for inter-application communication within the Android ecosystem.
+
+Entry points can vary based on the application's state and trigger method:
+\begin{itemize}
+    \item Launch from the application icon (first activity)
+    \item Retrieval from background (saved state)
+    \item Triggering by another application (service, receiver, or content provider)
+\end{itemize}
+
+\subsection{Component Declaration and Export}
+The Android operating system requires all components to be declared in the manifest file, with broadcast receivers being the sole exception. Broadcast receivers can be declared dynamically within the application logic.
+
+Key points about component declaration:
+\begin{itemize}
+    \item Mandatory declaration in manifest for system registration
+    \item Simple declaration allows only internal component access
+    \item Export flag required for inter-application access
+    \item Exported components create potential attack surfaces
+\end{itemize}
+
+\section{Activities}
+Activities represent the graphical user interface of Android applications, providing screens for user interaction. While there is no limit to the number of activities an application can declare, most applications start with a single main activity.
+
+\subsection{Main Activity}
+The main activity serves as the default entry point when users launch the application through its icon. It is uniquely identifiable by its intent filter in the manifest file. 
+
+When a user clicks the application icon:
+\begin{itemize}
+    \item Android OS intercepts the click event
+    \item System identifies the correct application through intent filters
+    \item OS forwards the event to launch the main activity
+\end{itemize}
+
+\subsection{Activity Lifecycle}
+The activity lifecycle defines the states and transitions that occur during an activity's existence. Each state transition triggers specific callback methods that developers can implement to manage the activity's behavior.
+
+\subsubsection{Creation and Visibility}
+The onCreate callback initiates the activity lifecycle. During this phase:
+\begin{itemize}
+    \item System creates the activity instance
+    \item Essential components are initialized
+    \item Layout is defined through setContentView()
+    \item Activity prepares for display
+\end{itemize}
+
+Following creation, the activity transitions through onStart to become visible to the user.
+
+\subsubsection{Interaction and Focus}
+The active phase of an activity involves several states:
+
+\begin{itemize}
+    \item Resumed (Active): Full user interaction through onResume
+    \item Paused: Partially visible but not focused
+    \item Background: Not visible but maintaining state
+\end{itemize}
+
+In the paused state, the activity can perform lightweight UI updates but should avoid resource-intensive operations such as network calls or database transactions.
+
+\subsubsection{Background and Destruction}
+When an activity enters the stopped state through onStop, it has two possible paths:
+\begin{itemize}
+    \item Return to visibility via onRestart
+    \item Proceed to destruction, releasing all resources
+\end{itemize}
+
+\subsection{Activity Execution}
+Activities can be started in two primary modes:
+\begin{itemize}
+    \item Standard start: Simple activity launch
+    \item Start for result: Launch with expectation of return data
+\end{itemize}
+
+The choice depends on whether the calling component needs to receive data back from the launched activity.
+\section{Activity Communication through Intents}
+When triggering activities, an Intent object must be provided. There are two main types of intents:
+
+\subsection{Intent Types}
+
+Android supports two fundamental types of intents. Explicit intents and implicit intents serve different purposes and have distinct characteristics.
+
+\subsection{Explicit Intents}
+
+Explicit intents specify the exact target component through the package name and component name. When targeting components within the same application, developers can use the .class reference directly. However, when targeting components in different applications, string references must be used since the .class file is not available.
+
+The characteristics of explicit intents are as follows:
+
+\begin{itemize}
+\item Require package name and component name
+\item Can use .class reference for same-app components
+\item Must use strings for cross-app references
+\end{itemize}
+
+\subsection{Implicit Intents}
+
+Implicit intents, on the other hand, specify only the desired action, leaving the Android OS responsible for finding a suitable component to handle the request. This approach provides flexibility but requires proper handling of cases where multiple components might respond to the same action.
+
+\section{Activity Communication through Intents}
+To trigger activity execution, an Intent object must be provided. This object serves as the messaging system between components, whether within the same application or across different applications. 
+
+\subsection{Activity Communication Process}
+Consider a practical example where component X in application A needs to communicate with component Y in application B. The process involves several key steps:
+
+\begin{itemize}
+    \item Initial Request:
+    Component X crafts an explicit intent and calls startActivityForResult, providing both the intent and a request code.
+    
+    \item Processing:
+    Component Y receives the request in its onCreate method and processes it accordingly.
+    
+    \item Response:
+    Y can respond using setResult, providing a result code and a data-containing intent.
+\end{itemize}
+
+The communication concludes when X receives the response in its onActivityResult callback. This method provides the original request code, the result code from Y, and any data sent back in the intent.
+
+\section{Services}
+Services represent components that operate without a graphical user interface, functioning as background threads for various operations. Unlike activities, services focus on performing tasks rather than user interaction.
+
+\subsection{Service Types}
+Android's service framework includes three types of services:
+
+\begin{itemize}
+\item Local services: These services are bound to a specific component and run only while the bound component is active.
+\item Remote services: These services are not bound to a specific component and can be accessed from any component in the application.
+\item System services: These services are provided by the Android system and are not part of the application's code.
+\end{itemize}
+
+\subsection{Service Lifecycle}
+The lifecycle of a service is tied to the lifecycle of the application. When the application is created, the service is also created. When the application is destroyed, the service is also destroyed.
+
+\subsection{Service Modes}
+Services can operate in different modes, which affect their behavior and interaction with the application:
+
+\begin{itemize}
+\item Background services: These services run in the background, performing tasks without a visible user interface. They are suitable for tasks that do not require a strong connection to the user interface, such as data synchronization or file management.
+\item Foreground services: These services run in the foreground, providing a visible user interface or interacting with the user. They are suitable for tasks that require a strong connection to the user interface, such as music playback or GPS navigation.
+\item Bonded services: These services are bound to a specific component, allowing for two-way communication between the service and the component. They are suitable for tasks that require a strong connection to the user interface, such as data synchronization or file management.
+\end{itemize}
+
+\subsection{Service Communication}
+Services can communicate with each other and with other components in the application using the following methods:
+
+\begin{itemize}
+\item Intents: Services can send and receive intents to communicate with other components.
+\item Bind: Services can bind to a specific component to receive messages and send responses.
+\end{itemize}
+
+\subsection{Service Best Practices}
+Here are some best practices for using services in Android applications:
+
+\begin{itemize}
+\item Use local services for tasks that require a strong connection to the user interface.
+\item Use background services for tasks that do not require a strong connection to the user interface.
+\item Use foreground services for tasks that require a visible user interface or interaction with the user.
+\item Use bonded services for tasks that require two-way communication between the service and the component.
+\end{itemize}
+\section{Broadcast Receivers}
+Broadcast receivers are components that can receive and respond to system-wide broadcasts. They can be used to trigger actions in other applications.
+
+\subsection{Broadcast Receiver Types}
+There are two types of broadcast receivers:
+
+\begin{itemize}
+\item Local broadcast receivers: These receivers are bound to a specific component and receive broadcasts from the same application.
+\item System broadcast receivers: These receivers are not bound to a specific component and receive broadcasts from the system.
+\end{itemize}
+
+The characteristics of broadcast receivers are as follows:
+
+\begin{itemize}
+\item Broadcast receivers can receive broadcasts from the system or from other applications.
+\item Broadcast receivers can respond to broadcasts by sending an intent back to the sender.
+\item Broadcast receivers can be used to trigger actions in other applications.
+\end{itemize}
+
+\subsection{Broadcast Receiver Lifecycle}
+The lifecycle of a broadcast receiver is tied to the lifecycle of the application. When the application is created, the broadcast receiver is also created. When the application is destroyed, the broadcast receiver is also destroyed.
+
+\subsection{Broadcast Receiver Best Practices}
+Here are some best practices for using broadcast receivers in Android applications:
+
+\begin{itemize}
+\item Use local broadcast receivers for tasks that require a strong connection to the user interface.
+\item Use system broadcast receivers for tasks that do not require a strong connection to the user interface.
+\item Use the IntentFilter to specify the types of broadcasts that the receiver can receive.
+\item Use the onReceive method to respond to broadcasts.
+\end{itemize}
+\section{Android Content Providers}
+Content providers in Android facilitate data sharing between applications, serving as an interface for accessing data managed by another app. By design, applications on Android are installed in private directories, accessible only to the app itself. However, situations arise where an application might need to share data with other applications. While intents can handle small data exchanges, content providers are used when substantial data sharing is necessary, such as with full databases.
+
+\subsection{Role of Content Providers}
+Content providers act as intermediaries, giving external applications access to the underlying data source while preserving the managing application's control. The content provider manages access to the data and is the component responsible for defining how data is shared. Applications can interact with the data source through a \textit{content resolver}, an object that acts as the bridge between the requesting application and the data source.
+
+\subsection{Types of Content Providers}
+There are two main types of content providers:
+\begin{itemize}
+    \item \textbf{Built-in Content Providers:} These are pre-existing providers within the Android ecosystem, such as those managing browser bookmarks, call logs, and contact details.
+    \item \textbf{Custom Content Providers:} Developers can create custom providers to share unique data sources, defining their content provider class and handling specific data interactions.
+\end{itemize}
+
+\subsection{Identifying Content Providers via URIs}
+Each content provider is identified by a URI with a specific format. The URI structure comprises four components that vary depending on the specificity of the data request. The mandatory components are:
+\begin{enumerate}
+    \item \textbf{Content Scheme:} Denoted by \texttt{content://}, indicating that this URI is for a content provider.
+    \item \textbf{Authority:} The unique name of the content provider managing access, such as \texttt{contacts} for the contacts provider.
+\end{enumerate}
+Additional optional components specify the exact table and row within that table, enabling targeted access to data.
+
+\subsection{Data Access with Cursors and Content Resolvers}
+Once the URI is specified, the content provider provides access to data via a \textit{cursor} or \textit{content resolver}. A cursor is used for read-only access, allowing data listing, while a content resolver can also add, modify, or delete data. Regardless of the underlying data model, the content provider presents data in a table-like structure, with rows representing unique data entries and columns indicating data fields.
+
+\subsection{Built-in vs. Custom Providers}
+Android's built-in providers offer immediate access to common data sets, while custom providers are ideal for specific data-sharing needs unique to an application. Developers can define a custom provider by extending the \texttt{ContentProvider} class, adapting it to the structure and security needs of their data source.
+
+\subsection{Example Use Case}
+For instance, to access a contacts provider's data, we would specify the URI structure to include the authority (\texttt{contacts}), table (\texttt{contacts table}), and, if needed, a row ID. The flexibility of content providers makes them suitable for various applications, from simple data listings to dynamic, CRUD-based interactions.
+
+\end{document}

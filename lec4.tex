@@ -1,0 +1,132 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{geometry}
+
+\title{Mobile Security Course}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Certificates and Signatures}
+\subsection{What is a Certificate?}
+When talking about signing an application, it means that within the Android app, we can find a certificate. Generally speaking, a certificate is an electronic document containing metadata that identifies an entity, such as a developer, server, or company. Certificates rely on public key cryptography, allowing an entity to represent itself with a key pair, composed of a public and a private key.
+
+\subsection{Certificate Contents}
+Certificates usually contain various information, including:
+\begin{itemize}
+    \item Version
+    \item Serial number
+    \item Validity period, as certificates typically have limited validity
+    \item Public key, which is associated with a private key not shared publicly
+    \item Certificate owner information (e.g., name, organization, location)
+    \item Expiration time
+    \item Certification authority details and digital signature
+\end{itemize}
+
+\subsection{Certificate Verification}
+Certificates serve as a type of "letter of introduction" for entities. For example, a website with a certificate allows a browser to verify the certificate and confirm if the server is trusted. Various standards can be used to create certificates, with the most common being X.509.
+
+\section{Certificate Generation Process}
+\subsection{Creating Key Pairs}
+As a first step, a client generates a key pair (a public and private key). The public key, along with metadata identifying the client, is included in the certificate. This information is submitted to a Certificate Authority (CA), a trusted entity responsible for verifying the client's identity and issuing the certificate.
+
+\subsection{Issuing the Certificate}
+Once verified, the CA issues the certificate, which contains both the client's public key and metadata, as well as information about the CA itself, including its signature. This combination enables verification of the client's identity when the certificate is used.
+
+\section{Certificate Usage Example}
+Let's consider an example of using certificates to transmit data securely:
+\begin{itemize}
+    \item \textbf{Data Integrity and Identity Verification:} When transmitting data, we want to ensure the data's integrity and allow the receiver to verify the sender's identity.
+    \item \textbf{Hashing the Data:} We calculate a hash of the data, which transforms it into a fixed-length representation, regardless of input size. This hash can be used to verify data integrity.
+    \item \textbf{Encrypting the Hash:} The hash is then encrypted with the sender's private key to add a layer of security.
+\end{itemize}
+
+\section{Public Key Cryptography and Digital Signatures}
+\subsection{Encryption with Private Key and Decryption with Public Key}
+In public key cryptography, we use an asymmetric encryption system where data is usually encrypted with a private key and decrypted with a public key. The private key is held securely by the sender, while the public key, attached to the certificate, can be shared freely to allow anyone to decrypt the signature.
+
+\subsection{Signature Verification}
+The digital signature consists of the hash of the data encrypted with the sender's private key. The certificate attached to this signature contains the public key, information about the certificate authority, and metadata about the sender. Both the certificate and the signature are transmitted with the original data to the receiver.
+
+\subsection{Receiver Validation Process}
+Upon receiving the data, the receiver can verify:
+\begin{itemize}
+    \item \textbf{Integrity:} The receiver calculates the hash from the data received, then decrypts the signature using the public key in the certificate to obtain the original hash. If the hashes match, data integrity is confirmed.
+    \item \textbf{Trustworthiness of the Sender:} Since the certificate was issued by a certificate authority, it confirms the sender as a trusted entity.
+\end{itemize}
+
+\section{Types of Certificates}
+\subsection{Public and Private Certificates}
+There are two main types of certificates:
+\begin{itemize}
+    \item \textbf{Public Certificates:} Trusted certificates issued by a certificate authority within a known hierarchy, starting from a root certificate authority down through subordinate authorities.
+    \item \textbf{Private Certificates:} Untrusted self-signed certificates generated without a certificate authority's validation. These can still contain metadata about the owner but lack external verification.
+\end{itemize}
+
+\subsection{Hierarchy of Public Certificates}
+In the case of public certificates, a hierarchy is used. The lowest level certificate authority generates the certificate, signed by an authority higher up in the hierarchy, creating a trusted chain leading up to the root certificate authority.
+
+\subsection{Private Certificates and the Android Ecosystem}
+In the Android ecosystem, private certificates are common. Each developer can use a self-signed certificate for their application without involving a certificate authority. While in web contexts, self-signed certificates are often flagged by browsers, in Android, private certificates primarily serve to distinguish between developers, not to verify identity.
+
+\section{Differences Between Web and Android Certificate Use}
+The role of certificates varies between web and Android contexts:
+\begin{itemize}
+    \item \textbf{Web Certificates:} Public certificates verify the website's trustworthiness, while self-signed certificates may trigger a browser warning, though users can proceed at their discretion.
+    \item \textbf{Android Certificates:} Private certificates in Android do not verify developer identity but instead distinguish between app authors. The package name identifies the application, but developers can still use identical package names.
+\end{itemize}
+\section{Preventing App Spoofing with Certificates}
+\subsection{Distinguishing Between Legitimate and Malicious Apps}
+Certificates play a crucial role in distinguishing between apps developed by the same trusted source and those that may imitate them. For instance, if a legitimate Facebook app and a malicious app by attackers have the same package name, updating the original app with the malicious one could grant the malicious app access to sensitive data stored in the original app's private directory.
+
+To prevent this, the Android system checks certificates to ensure that two apps with the same package name have been signed with the same certificate. If the certificates do not match, Android will block the installation of the new app, signaling it as unauthorized and protecting the integrity of the legitimate app’s data.
+
+\subsection{System vs. User Apps and System Permissions}
+Certificates also help differentiate between system apps and user-installed apps. System apps, installed under the system partition, are signed with the system certificate, which is the same certificate used for the underlying platform. This allows these apps to receive system permissions, which normal apps cannot access.
+
+\section{Creating and Using Self-Signed Certificates}
+\subsection{Generating a Key Pair and Certificate}
+To sign an application, developers can generate a key pair (public and private keys) and create a self-signed certificate. Here is an example command for generating a key pair and a certificate:
+\begin{verbatim}
+# Command to generate a key pair and certificate
+keytool -genkey -alias exampleAlias -keyalg DSA -keysize 1024 -keystore example.keystore
+\end{verbatim}
+During this process, a password must be provided, and the developer is prompted to input metadata, such as name, department, organization, and location, which will be embedded within the certificate.
+
+\subsection{Signing an Application}
+Once the certificate is generated, developers can sign their APK file with the certificate using the following command:
+\begin{verbatim}
+# Command to sign an APK file
+jarsigner -keystore example.keystore -signedjar signedApp.apk app.apk exampleAlias
+\end{verbatim}
+
+\subsection{Verifying the Certificate Contents}
+After signing, the APK file can be opened with tools like JDX, a decompiler that allows inspection of the application's contents. Here, the certificate details can be viewed, including:
+\begin{itemize}
+    \item Developer’s name, organization, and location
+    \item Certificate validity period
+    \item Signature standard and type
+    \item Public key, used to verify data encrypted with the developer’s private key
+\end{itemize}
+
+\section{Ensuring App Integrity with Certificates}
+\subsection{Using Certificates for Integrity Verification}
+Certificates serve a dual purpose in Android. Besides distinguishing developers, they also help verify app integrity. By calculating a hash of files within an app and encrypting it with the developer’s private key, the app’s integrity can be confirmed. If any app component is altered, the hash will not match, indicating potential tampering.
+
+\subsection{Verifying Developer Identity and Integrity}
+The Android certificate system enables users to:
+\begin{itemize}
+    \item Confirm that an app has not been tampered with by verifying the hash values encrypted with the private key.
+    \item Distinguish between legitimate developers, as each app’s certificate must match across versions to indicate a trusted source.
+\end{itemize}
+
+In Android, private certificates are used primarily to distinguish between developers and to ensure that app integrity remains intact. The private key is essential for encrypting file hashes, while the public key enables receivers to decrypt and verify these hashes, ensuring that the app’s original files remain unmodified.
+
+\section{Summary}
+In Android, certificates fulfill dual roles: distinguishing among developers and protecting app integrity. While private certificates do not establish trust, they allow developers to verify their identity through consistent certificates across app versions. By using a private key to encrypt hash values, developers enable receivers to detect potential app modifications and confirm that the app's source and integrity are genuine.
+
+\end{document}
