@@ -1,0 +1,108 @@
+\documentclass{article}
+\usepackage[a4paper, margin=1in]{geometry}
+\usepackage{hyperref}
+\usepackage{parskip}
+
+\title{Lecture: Mobile Security Course}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section*{Introduction}
+Welcome, everyone, to this new lecture of the mobile security course. Today, we're going to inspect the possible techniques that you can use for reverse engineering an Android application. We will first start with the manual inspection of a membrane application through static and dynamic analysis techniques. Then, we will move towards the automatic analysis of an Android application through automated static and dynamic analysis approaches.
+
+First, we need to provide a formal definition of what reverse engineering an application means. Generally speaking, it is not possible to prescribe a specific method for reverse engineering another application. Reverse engineering is more or less an art that aims to understand and extract information about how something works. It depends on the purpose and goals of the analysis. According to the goals you want to achieve and the information you want to gather, you might use different techniques.
+
+\section*{Understanding Reverse Engineering}
+The goal of the reverse engineer is to understand what a piece of software does and how these actions are performed and achieved. Reverse engineering is considered an art because there is no definitive step-by-step guideline to follow; it is developed through experience and learning by doing. In this lecture, we will explore possible approaches that you can follow. However, based on the specific scenario you are analyzing, you'll need to adopt different sets of steps and approaches.
+
+\section*{Getting Started with Reverse Engineering}
+You should first have a general overview of what the application is supposed to do, at least according to the developers' claims. By executing the application, you can start retrieving more information about its functionality, logic, organization, and explore different paths and portions until you find vulnerabilities or possible attack surfaces. The analysis approach varies based on your objectives.
+
+For this course, you will be given a set of applications, each designed as a challenge to reverse engineer and find a flag embedded within the app. Understanding the flag might involve analyzing algorithms or network communications.
+
+\subsection*{Methodologies and Tools}
+Android analysis involves two approaches: static and dynamic analysis. Static analysis involves inspecting the application without execution, while dynamic analysis requires running the app, either on an emulator or a real device. Both approaches are critical and often used complementarily.
+
+\subsection*{Static and Dynamic Analysis}
+Start with static analysis: inspect the application without running it to gain an overview and understand its code structure. Then move to dynamic analysis to validate expected functionalities. Static analysis helps identify potential actions and functionalities, while dynamic analysis confirms these expectations.
+
+\subsection*{In-depth Static Analysis}
+Switch to a more in-depth static analysis by disassembling the code to inspect its logic or by decompiling the application to access the source code for further inspection of its internal logic.
+
+\subsection*{Dynamic Analysis Techniques}
+Dynamic analysis involves executing the application to observe its runtime behavior. This can reveal obfuscated values such as IP addresses, as these values are replaced with their real counterparts during execution. This method overcomes the limitations of static analysis, which is often hindered by obfuscation techniques.
+
+Dynamic analysis allows for monitoring API calls, runtime interactions, and system calls. It typically includes two approaches: debugging and instrumentation.
+
+\subsection*{Debugging and Instrumentation}
+Debugging attaches a debugger to the application's process, allowing for inspection of runtime values, fields, and memory by setting breakpoints. It usually requires source code access, a challenging requirement for applications only available in APK file format.
+
+Instrumentation, however, modifies the runtime execution by injecting custom code, enabling logging of APIs, network traffic, or memory dumps. It is a more flexible approach, suitable even without source code, and allows temporary modifications that persist only during execution.
+
+\subsection*{Instrumentation Techniques}
+Instrumentation can be manual, requiring precise code injection, or using frameworks which dictate specific methods of modification (either within the app or through its environment). Automation frameworks help streamline this process, but the developer or reverse engineer must understand the modification scope.
+
+Manual instrumentation involves disassembling, modifying, and reassembling APK files, often more reliably than decompilation methods. It involves working with smali code—creating code in Java and converting it if necessary—to achieve precise modifications.
+
+Applications may employ evasion techniques to detect and disrupt instrumentation attempts, highlighting the complexity and evolving landscape of Android app analysis. 
+
+\subsection*{Automated Analysis and Frameworks}
+Various frameworks can aid in automation of instrumentation, applicable at different levels—emulator, Android runtime, or the application. A notable example is Frida, renowned for enabling application-level instrumentation using injected JavaScript code, requiring root privileges for execution.
+
+However, caution is advised: Frida can be detected by instrumented apps, leading to potentially altered behaviors during analysis. Rooting devices can also be complex, with restrictions imposed by certain manufacturers.
+
+\section*{Pros and Cons: Static vs. Dynamic Analysis}
+\subsection*{Static Analysis}
+Pros:
+- Provides a high-level overview of application functionalities and structure.
+- Useful for inspecting specific elements, such as manifest files and additional classes.
+
+Cons:
+- Limited to assumptions about functionality due to non-execution.
+- Affected by obfuscation and complexity, obscuring critical information.
+
+\subsection*{Dynamic Analysis}
+Pros:
+- Reveals true values of obfuscated data at runtime, such as IP addresses and URLs.
+- Allows for detailed observation of API calls and network interactions in real-time.
+
+Cons:
+- Requires dynamic execution, necessary for understanding downloadable runtime data and verifying static assumptions.
+- Subject to runtime detection and evasion techniques by sophisticated applications.
+
+\section*{Toward Automated Program Analysis}
+Given the vast number of applications, manual analysis alone cannot suffice. Automated program analysis aims to make both static and dynamic approaches more efficient. It involves tracking, symbolic execution, and emulation of user interactions to detect malware, vulnerabilities, and perform comprehensive security evaluations.
+
+Some challenges include emulating user behavior and ensuring accurate interaction paths within applications. Automation enables scalability but introduces complexity in defining accurate evaluation techniques.
+
+\subsection*{Advanced Static Analysis Techniques}
+Automatic static analysis leverages methodologies such as taint analysis and symbolic execution. Taint analysis traces sensitive data flow from defined sources to sinks, identifying potential security risks. For instance, marking location data APIs and observing its propagation to network-related endpoints helps assess data security.
+
+Symbolic execution, although debated as either static or dynamic, emulates application logic symbolically, tracking variable states and exploring conditional paths. It constructs models predicting code behavior, ideal for analyzing decision-making processes and potential execution paths without directly executing the code.
+
+Tools such as FlowDroid facilitate these analyses, providing insight into data handling and application functionality. Symbolic execution can also model API invocation arguments as variables, defining constraints to simulate different execution paths within the application.
+
+\subsection*{Scalability vs. Precision}
+Automated analysis must balance scalability and precision. High scalability allows quick evaluation of numerous applications but often sacrifices precision, resulting in false positives or negatives. Conversely, higher precision ensures fewer errors but requires extensive time and resources, limiting scalability.
+
+Finding a suitable balance depends on objectives: whether analyzing a few applications with precision or aiming for broader evaluations across many apps. Fine-tuning methodologies is critical to these goals.
+
+\subsection*{Mitigating Evasion and Enhancing Dynamic Analysis}
+Evasion techniques (reflection, code obfuscation, and dynamic code loading) challenge both static and dynamic analyses. Employing an amalgamation of automatic static and dynamic approaches can improve detection rates and security evaluations, mitigating some evasion impacts.
+
+Automatic dynamic analysis replicates user actions to execute the application comprehensively, though true 100% code coverage remains elusive. Ensuring an instrumented environment captures as much application logic as possible enhances understanding and ready identification of malicious behavior.
+
+\section*{Challenges in Automatic Dynamic Analysis}
+Automated dynamic analysis involves tools like UI Automator and MonkeyRunner, emulating user interaction within applications. Despite access to file systems, network traffic, and application logic, code coverage limitations persist—some application paths remain untested.
+
+Evasion techniques also complicate analysis, with malwares using conditional logic (often referring to as "bombs") to obscure malicious behavior. These conditions may discriminate between emulator and real device execution, affecting behavior visibility.
+
+To summarize, static program analysis allows thorough code inspection, whereas dynamic analysis verifies real-time execution. Each has inherent limitations; combining both approaches enhances detection efficacy.
+
+Tools like Jadx aid static analysis, enabling decompilation to source code for comprehensive review. However, code obfuscation presents challenges, requiring nuanced, iterative analysis for effective application evaluation.
+
+\end{document}

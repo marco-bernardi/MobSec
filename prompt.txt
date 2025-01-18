@@ -1,0 +1,1 @@
+I'll give you the transcript of a video lesson, organize it into a .tex file with Section and subsection. Do not summarize too much or use a lot of dotted list, but remove the useless part. I'll start with part1
